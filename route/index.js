@@ -15,14 +15,14 @@ app.get('/', (req, res) => {
 
 
 
-app.get('/users', (req, res) => {
-    connection.query(
-        'SELECT * FROM User',
-        function (err, results, fields) {
-            res.send(results)
-        }
-    )
-})
+// app.get('/users', (req, res) => {
+//     connection.query(
+//         'SELECT * FROM User',
+//         function (err, results, fields) {
+//             res.send(results)
+//         }
+//     )
+// })
 
 
 
@@ -155,8 +155,9 @@ app.post('/addincome', (req, res) => {
   app.get('/users/:id', (req, res) => {
     const id = req.params.id;
     connection.query(
-        'SELECT * FROM users WHERE id = ?', [id],
+        'SELECT * FROM user WHERE user_id = ?', [id],
         function (err, results, fields) {
+            console.log(results)
             res.send(results)
         }
     )
