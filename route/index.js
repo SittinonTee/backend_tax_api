@@ -103,9 +103,9 @@ app.post('/login', (req, res) => {
   });
 
 
-  app.get('/getdata/:user_id', (req, res) => {
+  app.get('/getuserincome/:user_id', (req, res) => {
     const user_id = req.params.user_id;
-    console.log(user_id);
+    // console.log(user_id);
     connection.query(
         'SELECT * FROM UserIncome WHERE user_id = ?',
         [user_id],
@@ -114,11 +114,30 @@ app.post('/login', (req, res) => {
                 console.error(err);
                 res.status(500).send('Database error');
             } else {
-                console.log("dataUser",results);
+                // console.log("dataUser",results);
                 res.send(results);
             }
         }
     );
+});
+
+
+app.get('/getusertax/:user_id', (req, res) => {
+  const user_id = req.params.user_id;
+  // console.log(user_id);
+  connection.query(
+      'SELECT * FROM UserTax WHERE user_id = ?',
+      [user_id],
+      function (err, results, fields) {
+          if (err) {
+              console.error(err);
+              res.status(500).send('Database error');
+          } else {
+              // console.log("dataUser",results);
+              res.send(results);
+          }
+      }
+  );
 });
 
 
@@ -128,7 +147,7 @@ app.post('/login', (req, res) => {
 
 app.post('/addincome', (req, res) => {
     const { user_id, amount, tax_withhold, income_type, type_value } = req.body;
-    console.log("ส่ง income",req.body);
+    // console.log("ส่ง income",req.body);
 
     connection.query(
       'INSERT INTO UserIncome (user_id, amount, tax_withhold, income_type, type_value) VALUES (?, ?, ?, ?, ?)',
@@ -138,7 +157,7 @@ app.post('/addincome', (req, res) => {
           console.error(err);
           res.status(500).send('Database error');
         } else {
-          console.log(results);
+          // console.log(results);
           res.send(results);
         }
       }
@@ -146,7 +165,29 @@ app.post('/addincome', (req, res) => {
   });
   
 
+  app.post('/addtax', (req, res) => {
+    const { user_id, tax, tax_type, type_value } = req.body;
+    // console.log("ส่ง tax",req.body);
 
+    connection.query(
+      'INSERT INTO UserTax (user_id, tax, tax_type,type_value) VALUES (?, ?, ?, ?)',
+      [user_id, tax, tax_type, type_value],
+      function (err, results, fields) {
+        if (err) {
+          console.error(err);
+          res.status(500).send('Database error');
+        } else {
+          // console.log(results);
+          res.send(results);
+        }
+      }
+    );
+  });
+  
+  // 'user_id': int.parse(userId!),
+  // 'tax': tax,
+  // 'tax_type': widget.type,
+  // 'type_value': widget.data,
 
 
 
@@ -157,11 +198,115 @@ app.post('/addincome', (req, res) => {
     connection.query(
         'SELECT * FROM user WHERE user_id = ?', [id],
         function (err, results, fields) {
-            console.log(results)
+            // console.log(results)
             res.send(results)
         }
     )
 })
+
+
+
+app.get('/api/getdataTaxdetails', (req, res) => {
+  connection.query(
+    `SELECT d.name, d.max_amount, c.name AS category
+     FROM Datatax d
+     JOIN categories c ON d.category_id = c.category_id`,
+    function (err, results, fields) {
+      if (err) {
+        console.error(err);
+        res.status(500).send('เกิดข้อผิดพลาด');
+        return;
+      }
+      res.send(results); 
+    }
+  );
+});
+
+
+
+
+app.get('/gettypetax/:name', (req, res) => {
+  const id = req.params.name;
+  console.log("dddddddddddddd"+id);
+  connection.query(
+      'SELECT * FROM Datatax WHERE  id= ?', [id],
+      function (err, results, fields) {
+          console.log("getype "+results) 
+          res.send(results)
+      }
+  )
+})
+
+
+app.get('/checktypetax/:name', (req, res) => {
+  const id = req.params.name;
+
+  connection.query(
+    'SELECT * FROM UserTax WHERE user_id = ? AND type_value = "ค่าลดหย่อนส่วนตัว"', [id],
+    function (err, results, fields) {
+
+      if (results.length > 0) {
+        console.log(" ID found ", results);
+        res.json({ success: false,});
+        // res.json({ success: true, data: results[0] });
+      } else {
+        console.log("ID not found ");
+        res.json({ success: true, message: 'ID not found ' });
+      }
+    }
+  );
+});
+
+
+
+
+
+app.delete('/deleteincome/:userId', express.json(), (req, res) => {
+  const userId = req.params.userId;
+  const incomeId = req.body.income_id;  
+  // console.log(`Attempting to delete income for userId: ${userId}, incomeId: ${incomeId}`);
+  connection.query(
+    'DELETE FROM `UserIncome` WHERE user_id = ? AND income_id = ?',
+    [userId, incomeId], 
+    function (err, results, fields) {
+      if (err) {
+        res.status(500).send(err);
+      } else {
+        res.send(results);
+      }
+    }
+  );
+});
+
+
+app.put('/updateincome/:id', (req, res) => {
+  const incomeId = req.params.id;
+  const { amount, tax_withhold} = req.body;
+  console.log('🔍 incomeId:', incomeId);
+  console.log('📦 req.body:', req.body);
+  
+  const query = `
+    UPDATE UserIncome
+    SET amount = ?, tax_withhold = ?
+    WHERE income_id = ?
+  `;
+
+  connection.query(query, [amount, tax_withhold,  incomeId], (err, results) => {
+    if (err) {
+      console.error("Error updating income:", err);
+      return res.status(500).json({ message: "Update failed" });
+    }
+
+    res.status(200).json({ message: "Income updated", results });
+  });
+});
+
+
+
+
+
+
+
 
 // export async function POST(request) {
 //     try {
