@@ -121,6 +121,25 @@ app.post('/login', (req, res) => {
     );
 });
 
+app.get('/getusertax/:user_id', (req, res) => {
+  const user_id = req.params.user_id;
+  console.log(user_id);
+  connection.query(
+      'SELECT * FROM UserTax WHERE user_id = ?',
+      [user_id],
+      function (err, results, fields) {
+          if (err) {
+              console.error(err);
+              res.status(500).send('Database error');
+          } else {
+              // console.log("dataUser",results);
+              res.send(results);
+          }
+      }
+  );
+});
+
+
 
 app.get('/getusertax/:user_id', (req, res) => {
   const user_id = req.params.user_id;
@@ -278,6 +297,27 @@ app.delete('/deleteincome/:userId', express.json(), (req, res) => {
   );
 });
 
+app.delete('/deletetax/:userId', express.json(), (req, res) => {
+  const userId = req.params.userId;
+  const taxId = req.body.tax_id;  // ✅ ต้องใช้ tax_id เพราะ frontend ส่งแบบนี้
+
+  console.log(`Attempting to delete tax for userId: ${userId}, taxId: ${taxId}`);
+
+  connection.query(
+    'DELETE FROM `UserTax` WHERE user_id = ? AND tax_id = ?',
+    [userId, taxId],
+    function (err, results, fields) {
+      if (err) {
+        console.error("MySQL Error:", err);  // ✅ เพิ่ม log error
+        res.status(500).send(err);
+      } else {
+        res.send(results);
+      }
+    }
+  );
+});
+
+
 
 app.put('/updateincome/:id', (req, res) => {
   const incomeId = req.params.id;
@@ -302,7 +342,27 @@ app.put('/updateincome/:id', (req, res) => {
 });
 
 
+app.put('/updatetax/:id', (req, res) => {
+  const incomeId = req.params.id;
+  const {  tax } = req.body;
+  console.log('🔍 incomeId:', incomeId);
+  console.log('📦 req.body:', req.body);
+  
+  const query = `
+    UPDATE UserTax
+    SET tax = ?
+    WHERE tax_id = ?
+  `;
 
+  connection.query(query, [tax, incomeId], (err, results) => {
+    if (err) {
+      console.error("Error updating income:", err);
+      return res.status(500).json({ message: "Update failed" });
+    }
+
+    res.status(200).json({ message: "Tax updated", results });
+  });
+});
 
 
 
