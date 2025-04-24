@@ -9,9 +9,9 @@ app.use(express.json())
 
 const connection = mysql.createConnection(process.env.DATABASE_URL)
 
-app.get('/', (req, res) => {
-    res.send('Hello world!!')
-})
+// app.get('/', (req, res) => {
+//     res.send('Hello world!!')
+// })
 
 
 
@@ -23,8 +23,6 @@ app.get('/', (req, res) => {
 //         }
 //     )
 // })
-
-
 
 
 
@@ -65,7 +63,7 @@ app.delete('/users', (req, res) => {
         'DELETE FROM `users` WHERE id =?',
         [req.body.id],
          function (err, results, fields) {
-            res.send(results)
+            res.send(results) 
         }
     )
 })
@@ -100,26 +98,37 @@ app.post('/login', (req, res) => {
         return res.status(401).json({ message: 'Incorrect password' });
       }
     });
+    
   });
 
 
-  app.get('/getuserincome/:user_id', (req, res) => {
-    const user_id = req.params.user_id;
-    // console.log(user_id);
-    connection.query(
-        'SELECT * FROM UserIncome WHERE user_id = ?',
-        [user_id],
-        function (err, results, fields) {
-            if (err) {
-                console.error(err);
-                res.status(500).send('Database error');
-            } else {
-                // console.log("dataUser",results);
-                res.send(results);
-            }
+
+
+
+  app.post('/signup', (req, res) => {
+    const { username, email, phone, age, password } = req.body;
+  
+
+      const sqlInsert = `
+        INSERT INTO user (username, gmail, password, phone, age)
+        VALUES (?, ?, ?, ?, ?)`;
+  
+      connection.query(sqlInsert, [username, email, password, phone, age], (err, result) => {
+        if (err) {
+          console.error('Error inserting user:', err);
+          return res.status(500).json({ message: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' });
         }
-    );
-});
+  
+        return res.status(200).json({
+          message: 'สมัครสมาชิกสำเร็จ',
+          userId: result.insertId
+        });
+      });
+    // });
+  });
+  
+
+
 
 app.get('/getusertax/:user_id', (req, res) => {
   const user_id = req.params.user_id;
@@ -141,11 +150,31 @@ app.get('/getusertax/:user_id', (req, res) => {
 
 
 
-app.get('/getusertax/:user_id', (req, res) => {
+// app.get('/getusertax/:user_id', (req, res) => {
+//   const user_id = req.params.user_id;
+//   // console.log(user_id);
+//   connection.query(
+//       'SELECT * FROM UserTax WHERE user_id = ?',
+//       [user_id],
+//       function (err, results, fields) {
+//           if (err) {
+//               console.error(err);
+//               res.status(500).send('Database error');
+//           } else {
+//               // console.log("dataUser",results);
+//               res.send(results);
+//           }
+//       }
+//   );
+// });
+
+
+
+app.get('/getuserincome/:user_id', (req, res) => {
   const user_id = req.params.user_id;
   // console.log(user_id);
   connection.query(
-      'SELECT * FROM UserTax WHERE user_id = ?',
+      'SELECT * FROM UserIncome WHERE user_id = ?',
       [user_id],
       function (err, results, fields) {
           if (err) {
@@ -158,8 +187,6 @@ app.get('/getusertax/:user_id', (req, res) => {
       }
   );
 });
-
-
 
 
 
@@ -299,7 +326,7 @@ app.delete('/deleteincome/:userId', express.json(), (req, res) => {
 
 app.delete('/deletetax/:userId', express.json(), (req, res) => {
   const userId = req.params.userId;
-  const taxId = req.body.tax_id;  // ✅ ต้องใช้ tax_id เพราะ frontend ส่งแบบนี้
+  const taxId = req.body.tax_id;  
 
   console.log(`Attempting to delete tax for userId: ${userId}, taxId: ${taxId}`);
 
@@ -308,7 +335,7 @@ app.delete('/deletetax/:userId', express.json(), (req, res) => {
     [userId, taxId],
     function (err, results, fields) {
       if (err) {
-        console.error("MySQL Error:", err);  // ✅ เพิ่ม log error
+        console.error("MySQL Error:", err); 
         res.status(500).send(err);
       } else {
         res.send(results);
@@ -322,8 +349,8 @@ app.delete('/deletetax/:userId', express.json(), (req, res) => {
 app.put('/updateincome/:id', (req, res) => {
   const incomeId = req.params.id;
   const { amount, tax_withhold} = req.body;
-  console.log('🔍 incomeId:', incomeId);
-  console.log('📦 req.body:', req.body);
+  // console.log('🔍 incomeId:', incomeId);
+  // console.log('📦 req.body:', req.body);
   
   const query = `
     UPDATE UserIncome
@@ -363,6 +390,7 @@ app.put('/updatetax/:id', (req, res) => {
     res.status(200).json({ message: "Tax updated", results });
   });
 });
+
 
 
 
@@ -410,3 +438,23 @@ app.put('/updatetax/:id', (req, res) => {
 
 // export the app for vercel serverless functions
 module.exports = app;
+    // if (!username || !email || !phone || !age || !password) {
+    //   return res.status(400).json({ message: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+    // }
+  
+    // const sqlCheck = 'SELECT * FROM user WHERE username = ? OR gmail = ?';
+    // connection.query(sqlCheck, [username, email], (err, results) => {
+    //   if (err) {
+    //     console.error('Database error:', err);
+    //     return res.status(500).json({ message: 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูล' });
+    //   }
+  
+    //   if (results.length > 0) {
+    //     const existingUser = results[0];
+    //     if (existingUser.username === username) {
+    //       return res.status(409).json({ message: 'ชื่อผู้ใช้นี้มีอยู่แล้วในระบบ' });
+    //     } else {
+    //       return res.status(409).json({ message: 'อีเมลนี้มีอยู่แล้วในระบบ' });
+    //     }
+    //   }
+  
